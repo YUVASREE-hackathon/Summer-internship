@@ -45,7 +45,7 @@ const Index = () => {
       <section className="hero">
         <div className="container">
           <div className="hero-content">
-            <h2></h2>
+            <h2>Discover Your Perfect Career Match</h2>
             <p>
               Our AI-powered platform analyzes your skills and certifications to
               recommend the most suitable job opportunities and career paths
