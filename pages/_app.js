@@ -1,4 +1,4 @@
-import "../styles/globals.css"; // ✅ Safe and universal
+import "../styles.css"; // ✅ Safe and universal
 
 
 export default function App({ Component, pageProps }) {
