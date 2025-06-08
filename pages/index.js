@@ -42,7 +42,7 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="hero">
+      <section className="hero" style="background:blue;">
         <div className="container">
           <div className="hero-content">
             <h2>Discover Your Perfect Career Match</h2>
