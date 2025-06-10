@@ -1,4 +1,26 @@
 import { useState } from "react";
+import { jobRolesData } from "@/data/data";
+
+function getMatchingJobs(profile) {
+  return jobRolesData.map((job) => {
+    const matchedSkills = job.requiredSkills.filter(skill =>
+      [...profile.technicalSkills, ...profile.softSkills].some(
+        userSkill =>
+          skill.toLowerCase().includes(userSkill.toLowerCase()) ||
+          userSkill.toLowerCase().includes(skill.toLowerCase())
+      )
+    );
+    const matchPercentage = Math.round(
+      (matchedSkills.length / job.requiredSkills.length) * 100
+    );
+    return {
+      ...job,
+      matchedSkills,
+      matchPercentage,
+    };
+  }).filter(job => job.matchPercentage >= 50) // Optional: only show jobs >= 50% match
+    .sort((a, b) => b.matchPercentage - a.matchPercentage); // Sort high to low
+}
 
 export default function ProfileForm() {
   const [technicalSkills, setTechnicalSkills] = useState([]);
@@ -167,6 +189,26 @@ export default function ProfileForm() {
           <p>Your profile has been analyzed. Job matches will appear here.</p>
         </div>
       )}
+{analysisDone && matchingJobs.length > 0 && (
+  <div className="job-results">
+    <h3>Top Job Matches</h3>
+    {matchingJobs.map((job, index) => (
+      <div key={index} className="job-card">
+        <h4>{job.title} <span className="badge">{job.matchPercentage}% Match</span></h4>
+        <p>{job.description}</p>
+        <p><strong>Industry:</strong> {job.industry}</p>
+        <p><strong>Work Type:</strong> {job.workType}</p>
+        <p><strong>Salary:</strong> ${job.salaryMin / 1000}K - ${job.salaryMax / 1000}K</p>
+        <div className="skill-tags">
+          {job.matchedSkills.map(skill => (
+            <span key={skill} className="skill-tag">{skill}</span>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
     </form>
   );
 }
