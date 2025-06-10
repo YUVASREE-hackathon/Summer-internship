@@ -300,11 +300,7 @@ const Index = () => {
           </div>
         </div>
       </main>
- <div>
-      <h1>CareerMatch Pro</h1>
-      <ProfileForm />
-    </div>
-      {/* Footer */}
+
       <footer className="footer">
         <div className="container">
           <div className="footer-grid">
