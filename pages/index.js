@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-
+import Script from 'next/script';
 const Index = () => {
   // Inject script.js and data.js from public folder
   useEffect(() => {
@@ -24,9 +24,10 @@ const Index = () => {
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
-  return (
+   return (
     <>
-
+<Script src="/data.js" strategy="beforeInteractive" />
+<Script src="/script.js" strategy="afterInteractive" />
       {/* Header */}
       <header className="header">
         <div className="container">
@@ -401,7 +402,6 @@ const Index = () => {
         </div>
       </div>
     </>
-
   );
 };
 
