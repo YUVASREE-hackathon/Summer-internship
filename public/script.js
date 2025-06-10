@@ -192,61 +192,63 @@ async function handleFormSubmit(e) {
 
 // Analysis function
 async function analyzeProfile(profile) {
-    // Calculate job matches
-    const jobMatchResults = jobMatchingEngine.calculateJobMatches(profile, jobRolesData);
-    const topMatches = jobMatchResults.slice(0, 10);
+  if (!window.jobMatchingEngine || !window.jobRolesData || !window.careerPathsData) {
+    throw new Error('Required data or engine not loaded');
+  }
 
-    // Calculate profile strength
-    const profileStrength = jobMatchingEngine.calculateProfileStrength(profile);
+  // Calculate job matches
+  const jobMatchResults = window.jobMatchingEngine.calculateJobMatches(profile, window.jobRolesData);
+  const topMatches = jobMatchResults.slice(0, 10);
 
-    // Calculate average salary
-    const averageSalary = Math.round(
-        topMatches.reduce((sum, match) => 
-            sum + (match.jobRole.salaryMin + match.jobRole.salaryMax) / 2, 0
-        ) / Math.max(topMatches.length, 1)
-    );
+  // Calculate profile strength
+  const profileStrength = window.jobMatchingEngine.calculateProfileStrength(profile);
 
-    // Get relevant career paths
-    const allSkills = [...profile.technicalSkills, ...profile.softSkills];
-    const careerPaths = getCareerPathsBySkills(allSkills);
+  // Calculate average salary
+  const averageSalary = Math.round(
+    topMatches.reduce((sum, match) => 
+      sum + (match.jobRole.salaryMin + match.jobRole.salaryMax) / 2, 0
+    ) / Math.max(topMatches.length, 1)
+  );
 
-    // Analyze skill gaps
-    const skillGapAnalysis = jobMatchingEngine.analyzeSkillGaps(
-        profile, 
-        topMatches.slice(0, 5).map(m => m.jobRole)
-    );
+  // Get relevant career paths
+  const allSkills = [...profile.technicalSkills, ...profile.softSkills];
+  const careerPaths = getCareerPathsBySkills(allSkills);
 
-    // Create complete analysis
-    const completeAnalysis = {
-        analysisResult: {
-            profileStrength,
-            averageSalary,
-            totalMatchingJobs: jobMatchResults.filter(match => match.matchPercentage >= 50).length,
-            totalCareerPaths: careerPaths.length,
-            createdAt: new Date().toISOString()
-        },
-        jobMatches: topMatches,
-        careerPaths: careerPaths.slice(0, 3),
-        skillGap: {
-            strengthSkills: skillGapAnalysis.strengthSkills,
-            improvementAreas: skillGapAnalysis.improvementAreas,
-            learningPath: skillGapAnalysis.learningPath
-        }
-    };
+  // Analyze skill gaps
+  const skillGapAnalysis = window.jobMatchingEngine.analyzeSkillGaps(
+    profile, 
+    topMatches.slice(0, 5).map(m => m.jobRole)
+  );
 
-    analysisResults = completeAnalysis;
-    return completeAnalysis;
+  // Create complete analysis
+  const completeAnalysis = {
+    analysisResult: {
+      profileStrength,
+      averageSalary,
+      totalMatchingJobs: jobMatchResults.filter(match => match.matchPercentage >= 50).length,
+      totalCareerPaths: careerPaths.length,
+      createdAt: new Date().toISOString()
+    },
+    jobMatches: topMatches,
+    careerPaths: careerPaths.slice(0, 3),
+    skillGap: {
+      strengthSkills: skillGapAnalysis.strengthSkills,
+      improvementAreas: skillGapAnalysis.improvementAreas,
+      learningPath: skillGapAnalysis.learningPath
+    }
+  };
+
+  return completeAnalysis;
 }
-
 function getCareerPathsBySkills(skills) {
-    return careerPathsData.filter(path =>
-        path.requiredSkills.some(skill => 
-            skills.some(userSkill => 
-                userSkill.toLowerCase().includes(skill.toLowerCase()) ||
-                skill.toLowerCase().includes(userSkill.toLowerCase())
-            )
-        )
-    );
+  return window.careerPathsData.filter(path =>
+    path.requiredSkills.some(skill => 
+      skills.some(userSkill => 
+        userSkill.toLowerCase().includes(skill.toLowerCase()) ||
+        skill.toLowerCase().includes(userSkill.toLowerCase())
+      )
+    )
+  );
 }
 
 // Display functions
@@ -345,52 +347,52 @@ function displayJobRecommendations(jobMatches) {
 }
 
 function createJobItem(match) {
-    const jobItem = document.createElement('div');
-    jobItem.className = 'job-item';
+  const jobItem = document.createElement('div');
+  jobItem.className = 'job-item';
 
-    const matchBadgeClass = getMatchBadgeClass(match.matchPercentage);
-    const salaryRange = formatSalary(match.jobRole.salaryMin, match.jobRole.salaryMax);
+  const matchBadgeClass = match.matchPercentage >= 85 ? 'match-badge-high' : 
+                         match.matchPercentage >= 70 ? 'match-badge-medium' : 'match-badge-low';
+  const salaryRange = $${(match.jobRole.salaryMin / 1000).toFixed(0)}K - $${(match.jobRole.salaryMax / 1000).toFixed(0)}K;
 
-    jobItem.innerHTML = `
-        <div class="job-header">
-            <div class="job-info">
-                <div class="job-title">
-                    <h4>${match.jobRole.title}</h4>
-                    <span class="match-badge ${matchBadgeClass}">${match.matchPercentage}% Match</span>
-                </div>
-                <div class="job-meta">
-                    <span>${match.jobRole.industry}</span>
-                    <span>•</span>
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span>${match.jobRole.workType}</span>
-                </div>
-                <p class="job-description">${match.jobRole.description}</p>
-                <p class="job-reasoning">${match.reasoning}</p>
-            </div>
-            <div class="job-salary">
-                <div class="salary-amount">${salaryRange}</div>
-                <div class="salary-period">per year</div>
-            </div>
+  jobItem.innerHTML = `
+    <div class="job-header">
+      <div class="job-info">
+        <div class="job-title">
+          <h4>${match.jobRole.title}</h4>
+          <span class="match-badge ${matchBadgeClass}">${match.matchPercentage}% Match</span>
         </div>
-        
-        <div class="job-footer">
-            <div class="job-skills">
-                ${match.matchingSkills.slice(0, 4).map(skill => 
-                    `<span class="skill-tag">${skill}</span>`
-                ).join('')}
-                ${match.matchingSkills.length > 4 ? 
-                    `<span class="skill-tag" style="border: 1px solid var(--border-color);">+${match.matchingSkills.length - 4} more</span>` 
-                    : ''
-                }
-            </div>
-            <button class="view-details-btn">
-                View Details
-                <i class="fas fa-arrow-right"></i>
-            </button>
+        <div class="job-meta">
+          <span>${match.jobRole.industry}</span>
+          <span>•</span>
+          <i class="fas fa-map-marker-alt"></i>
+          <span>${match.jobRole.workType}</span>
         </div>
-    `;
+        <p className="job-description">${match.jobRole.description}</p>
+        <p className="job-reasoning">${match.reasoning}</p>
+      </div>
+      <div class="job-salary">
+        <div class="salary-amount">${salaryRange}</div>
+        <div class="salary-period">per year</div>
+      </div>
+    </div>
+    <div class="job-footer">
+      <div class="job-skills">
+        ${match.matchingSkills.slice(0, 4).map(skill => 
+          <span class="skill-tag">${skill}</span>
+        ).join('')}
+        ${match.matchingSkills.length > 4 ? 
+          <span class="skill-tag" style="border: 1px solid var(--border-color);">+${match.matchingSkills.length - 4} more</span> 
+          : ''
+        }
+      </div>
+      <button class="view-details-btn" aria-label="View details for ${match.jobRole.title}">
+        View Details
+        <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  `;
 
-    return jobItem;
+  return jobItem;
 }
 
 function getMatchBadgeClass(percentage) {
@@ -544,14 +546,26 @@ function populateIndustryFilter(jobMatches) {
 }
 
 function filterJobsByIndustry(selectedIndustry) {
-    if (!analysisResults) return;
+  const jobList = document.getElementById('jobList');
+  if (!jobList || !window.analysisResults) return;
 
-    const filteredJobs = selectedIndustry === "all" 
-        ? analysisResults.jobMatches 
-        : analysisResults.jobMatches.filter(match => match.jobRole.industry === selectedIndustry);
+  const filteredJobs = selectedIndustry === "all" 
+    ? window.analysisResults.jobMatches 
+    : window.analysisResults.jobMatches.filter(match => match.jobRole.industry === selectedIndustry);
 
-    visibleJobs = 3;
-    displayJobRecommendations(filteredJobs);
+  jobList.innerHTML = '';
+  filteredJobs.slice(0, window.visibleJobs).forEach(match => {
+    const jobItem = createJobItem(match);
+    jobList.appendChild(jobItem);
+  });
+
+  const loadMoreBtn = document.getElementById('loadMoreJobs');
+  if (filteredJobs.length > window.visibleJobs) {
+    loadMoreBtn.classList.remove('hidden');
+    loadMoreBtn.textContent = View More Recommendations (${filteredJobs.length - window.visibleJobs} remaining);
+  } else {
+    loadMoreBtn.classList.add('hidden');
+  }
 }
 
 function loadMoreJobs() {
