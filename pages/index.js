@@ -26,8 +26,7 @@ const Index = () => {
 
   return (
     <>
-<Script src="public/data.js" strategy="beforeInteractive" />
-<Script src="public/script.js" strategy="afterInteractive" />
+
       {/* Header */}
       <header className="header">
         <div className="container">
