@@ -1,615 +1,246 @@
-// Global state
-let userProfile = {
+import React, { useState, useEffect } from "react";
+import { analyzeProfile } from '../utils/analyzeProfile';
+import { jobMatchingEngine, jobRolesData, careerPathsData } from '../data';
+
+const Index = () => {
+  const [userProfile, setUserProfile] = useState({
     technicalSkills: [],
     softSkills: [],
     certifications: [],
     experienceLevel: '',
     industry: ''
-};
-let analysisResults = null;
-let visibleJobs = 3;
-const skillsForm = document.getElementById('skillsForm');
-const technicalSkillInput = document.getElementById('technicalSkillInput');
-const softSkillInput = document.getElementById('softSkillInput');
-const certificationInput = document.getElementById('certificationInput');
-const experienceLevelSelect = document.getElementById('experienceLevel');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const technicalSkillsContainer = document.getElementById('technicalSkills');
-const softSkillsContainer = document.getElementById('softSkills');
-const certificationsContainer = document.getElementById('certifications');
-const technicalSkillsError = document.getElementById('technicalSkillsError');
-const softSkillsError = document.getElementById('softSkillsError');
-const experienceLevelError = document.getElementById('experienceLevelError');
-const initialState = document.getElementById('initialState');
-const loadingState = document.getElementById('loadingState');
-const analysisResultsContainer = document.getElementById('analysisResults');
-document.addEventListener('DOMContentLoaded', function() {
-    initializeEventListeners();
-});
-function initializeEventListeners() {
-    skillsForm.addEventListener('submit', handleFormSubmit);
-    technicalSkillInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addSkill('technical');
+  });
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [visibleJobs, setVisibleJobs] = useState(3);
+  const [industryFilter, setIndustryFilter] = useState('all');
+  const [errors, setErrors] = useState({
+    technicalSkills: '',
+    softSkills: '',
+    experienceLevel: ''
+  });
+  const [toast, setToast] = useState({ title: '', message: '', type: 'success', visible: false });
+
+  useEffect(() => {
+    if (analysisResults && typeof window !== 'undefined') {
+      import('chart.js/auto').then((ChartModule) => {
+        const ctx = document.getElementById('jobMatchChart')?.getContext('2d');
+        if (ctx) {
+          new ChartModule.default(ctx, {
+            type: 'bar',
+            data: {
+              labels: analysisResults.jobMatches.map(match => match.jobRole.title),
+              datasets: [{
+                label: 'Job Match Percentage',
+                data: analysisResults.jobMatches.map(match => match.matchPercentage),
+                backgroundColor: ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0'],
+                borderColor: ['#388E3C', '#1976D2', '#FFA000', '#E64A19', '#7B1FA2'],
+                borderWidth: 1
+              }]
+            },
+            options: {
+              scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Match Percentage (%)' } },
+                x: { title: { display: true, text: 'Job Roles' } }
+              },
+              plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Job Match Percentages' }
+              }
+            }
+          });
         }
-    });
-    softSkillInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addSkill('soft');
-        }
-    });
-    certificationInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addSkill('certification');
-        }
-    });
-    experienceLevelSelect.addEventListener('change', function(e) {
-        userProfile.experienceLevel = e.target.value;
-        clearError('experienceLevel');
-    });
-    document.addEventListener('change', function(e) {
-        if (e.target.id === 'industryFilter') {
-            filterJobsByIndustry(e.target.value);
-        }
-    });
-    document.addEventListener('click', function(e) {
-        if (e.target.id === 'loadMoreJobs') {
-            loadMoreJobs();
-        }
-    });
-}
-function addSkill(type) {
-    let input, container, skillsArray;
-    switch (type) {
-        case 'technical':
-            input = technicalSkillInput;
-            container = technicalSkillsContainer;
-            skillsArray = userProfile.technicalSkills;
-            break;
-        case 'soft':
-            input = softSkillInput;
-            container = softSkillsContainer;
-            skillsArray = userProfile.softSkills;
-            break;
-        case 'certification':
-            input = certificationInput;
-            container = certificationsContainer;
-            skillsArray = userProfile.certifications;
-            break;
+      });
     }
-    const value = input.value.trim();
-    if (!value) return;
-    if (!skillsArray.includes(value)) {
-        skillsArray.push(value);
-        updateSkillsDisplay(type, container, skillsArray);
-        clearError(type + 'Skills');
+  }, [analysisResults]);
+
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-    input.value = '';
-}
-function removeSkill(type, value) {
-    let container, skillsArray;
-    switch (type) {
-        case 'technical':
-            container = technicalSkillsContainer;
-            skillsArray = userProfile.technicalSkills;
-            break;
-        case 'soft':
-            container = softSkillsContainer;
-            skillsArray = userProfile.softSkills;
-            break;
-        case 'certification':
-            container = certificationsContainer;
-            skillsArray = userProfile.certifications;
-            break;
-    }
-    const index = skillsArray.indexOf(value);
-    if (index > -1) {
-        skillsArray.splice(index, 1);
-        updateSkillsDisplay(type, container, skillsArray);
-    }
-}
-function updateSkillsDisplay(type, container, skills) {
-    container.innerHTML = '';
-    skills.forEach(skill => {
-        const skillTag = document.createElement('div');
-        skillTag.className = `skill-tag skill-tag-${type}`;
-        skillTag.innerHTML = `
-            ${skill}
-            <button type="button" class="remove-btn" onclick="removeSkill('${type}', '${skill}')">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        container.appendChild(skillTag);
-    });
-}
-function validateForm() {
+  }, [toast.visible]);
+
+  const scrollToAnalysis = () => {
+    document.getElementById("analysis-form")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const validateForm = () => {
     let isValid = true;
-    clearAllErrors();
+    const newErrors = { technicalSkills: '', softSkills: '', experienceLevel: '' };
     if (userProfile.technicalSkills.length === 0) {
-        showError('technicalSkills', 'At least one technical skill is required');
-        isValid = false;
+      newErrors.technicalSkills = 'At least one technical skill is required';
+      isValid = false;
     }
     if (userProfile.softSkills.length === 0) {
-        showError('softSkills', 'At least one soft skill is required');
-        isValid = false;
+      newErrors.softSkills = 'At least one soft skill is required';
+      isValid = false;
     }
     if (!userProfile.experienceLevel) {
-        showError('experienceLevel', 'Please select an experience level');
-        isValid = false;
+      newErrors.experienceLevel = 'Please select an experience level';
+      isValid = false;
     }
+    setErrors(newErrors);
     return isValid;
-}
-function showError(field, message) {
-    const errorElement = document.getElementById(field + 'Error');
-    if (errorElement) {
-        errorElement.textContent = message;
-    }
-}
-function clearError(field) {
-    const errorElement = document.getElementById(field + 'Error');
-    if (errorElement) {
-        errorElement.textContent = '';
-    }
-}
-function clearAllErrors() {
-    const errorElements = document.querySelectorAll('.error-message');
-    errorElements.forEach(element => {
-        element.textContent = '';
-    });
-}
-async function handleFormSubmit(e) {
+  };
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-    if (!validateForm()) {
-        return;
-    }
-
-    // Show loading state
-    showLoadingState();
-
+    setAnalysisResults(null);
     try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Perform analysis
-        const results = await analyzeProfile(userProfile);
-        
-        // Show results
-        displayResults(results);
-        
-        // Show success toast
-        showToast('Analysis Complete', `Found ${results.jobMatches.length} job matches for your profile.`, 'success');
-
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const results = await analyzeProfile(userProfile, jobMatchingEngine, jobRolesData, careerPathsData);
+      if (!results) throw new Error('No results returned');
+      setAnalysisResults(results);
+      setToast({
+        title: 'Analysis Complete',
+        message: `Found ${results.jobMatches.length} job matches for your profile.`,
+        type: 'success',
+        visible: true
+      });
     } catch (error) {
-        console.error('Analysis failed:', error);
-        showToast('Analysis Failed', 'There was an error analyzing your profile. Please try again.', 'error');
-        showInitialState();
-    }
-}
-
-// Analysis function
-async function analyzeProfile(profile) {
-  if (!window.jobMatchingEngine || !window.jobRolesData || !window.careerPathsData) {
-    throw new Error('Required data or engine not loaded');
-  }
-
-  // Calculate job matches
-  const jobMatchResults = window.jobMatchingEngine.calculateJobMatches(profile, window.jobRolesData);
-  const topMatches = jobMatchResults.slice(0, 10);
-
-  // Calculate profile strength
-  const profileStrength = window.jobMatchingEngine.calculateProfileStrength(profile);
-
-  // Calculate average salary
-  const averageSalary = Math.round(
-    topMatches.reduce((sum, match) => 
-      sum + (match.jobRole.salaryMin + match.jobRole.salaryMax) / 2, 0
-    ) / Math.max(topMatches.length, 1)
-  );
-
-  // Get relevant career paths
-  const allSkills = [...profile.technicalSkills, ...profile.softSkills];
-  const careerPaths = getCareerPathsBySkills(allSkills);
-
-  // Analyze skill gaps
-  const skillGapAnalysis = window.jobMatchingEngine.analyzeSkillGaps(
-    profile, 
-    topMatches.slice(0, 5).map(m => m.jobRole)
-  );
-
-  // Create complete analysis
-  const completeAnalysis = {
-    analysisResult: {
-      profileStrength,
-      averageSalary,
-      totalMatchingJobs: jobMatchResults.filter(match => match.matchPercentage >= 50).length,
-      totalCareerPaths: careerPaths.length,
-      createdAt: new Date().toISOString()
-    },
-    jobMatches: topMatches,
-    careerPaths: careerPaths.slice(0, 3),
-    skillGap: {
-      strengthSkills: skillGapAnalysis.strengthSkills,
-      improvementAreas: skillGapAnalysis.improvementAreas,
-      learningPath: skillGapAnalysis.learningPath
+      console.error('Analysis failed:', error);
+      setToast({
+        title: 'Analysis Failed',
+        message: error.message || 'Please try again.',
+        type: 'error',
+        visible: true
+      });
     }
   };
 
-  return completeAnalysis;
-}
-function getCareerPathsBySkills(skills) {
-  return window.careerPathsData.filter(path =>
-    path.requiredSkills.some(skill => 
-      skills.some(userSkill => 
-        userSkill.toLowerCase().includes(skill.toLowerCase()) ||
-        skill.toLowerCase().includes(userSkill.toLowerCase())
-      )
-    )
-  );
-}
+  const addSkill = (type) => {
+    const input = document.getElementById(`${type}SkillInput`);
+    const value = input?.value.trim();
+    if (!value) return;
 
-// Display functions
-function showInitialState() {
-    initialState.classList.remove('hidden');
-    loadingState.classList.add('hidden');
-    analysisResultsContainer.classList.add('hidden');
-}
-
-function showLoadingState() {
-    initialState.classList.add('hidden');
-    loadingState.classList.remove('hidden');
-    analysisResultsContainer.classList.add('hidden');
-    
-    // Update analyze button
-    analyzeBtn.disabled = true;
-    analyzeBtn.innerHTML = `
-        <div class="loading-spinner" style="width: 1rem; height: 1rem; margin-right: 0.5rem;"></div>
-        Analyzing...
-    `;
-}
-
-function displayResults(results) {
-    initialState.classList.add('hidden');
-    loadingState.classList.remove('hidden');
-    analysisResultsContainer.classList.remove('hidden');
-
-    // Reset analyze button
-    analyzeBtn.disabled = false;
-    analyzeBtn.innerHTML = `
-        <i class="fas fa-search"></i>
-        Analyze My Profile
-    `;
-
-    // Display analysis overview
-    displayAnalysisOverview(results.analysisResult);
-
-    // Display job recommendations
-    displayJobRecommendations(results.jobMatches);
-
-    // Display career pathways
-    displayCareerPathways(results.careerPaths);
-
-    // Display skill gap analysis
-    displaySkillGapAnalysis(results.skillGap);
-
-    // Populate industry filter
-    populateIndustryFilter(results.jobMatches);
-
-    // Reset visible jobs counter
-    visibleJobs = 3;
-}
-
-function displayAnalysisOverview(analysis) {
-    // Update profile strength
-    const strengthScore = document.getElementById('profileStrength');
-    const strengthProgress = document.getElementById('strengthProgress');
-    const strengthDescription = document.getElementById('strengthDescription');
-
-    strengthScore.textContent = analysis.profileStrength + '%';
-    strengthProgress.style.width = analysis.profileStrength + '%';
-
-    let description = '';
-    if (analysis.profileStrength >= 80) {
-        description = "Excellent profile strength! You're well-positioned for senior roles.";
-    } else if (analysis.profileStrength >= 60) {
-        description = "Good profile foundation. Consider adding more certifications to boost your score.";
-    } else {
-        description = "Growing profile. Focus on building core technical skills and gaining certifications.";
-    }
-    strengthDescription.textContent = description;
-
-    // Update quick stats
-    document.getElementById('matchingJobs').textContent = analysis.totalMatchingJobs;
-    document.getElementById('careerPaths').textContent = analysis.totalCareerPaths;
-    document.getElementById('avgSalary').textContent = `$${(analysis.averageSalary / 1000).toFixed(0)}K`;
-}
-
-function displayJobRecommendations(jobMatches) {
-    const jobList = document.getElementById('jobList');
-    jobList.innerHTML = '';
-
-    jobMatches.slice(0, visibleJobs).forEach(match => {
-        const jobItem = createJobItem(match);
-        jobList.appendChild(jobItem);
+    setUserProfile(prev => {
+      const skillsArray = prev[`${type}Skills`];
+      if (!skillsArray.includes(value)) {
+        return { ...prev, [`${type}Skills`]: [...skillsArray, value] };
+      }
+      return prev;
     });
+    setErrors(prev => ({ ...prev, [`${type}Skills`]: '' }));
+    if (input) input.value = '';
+  };
 
-    // Update load more button
-    const loadMoreBtn = document.getElementById('loadMoreJobs');
-    if (jobMatches.length > visibleJobs) {
-        loadMoreBtn.classList.remove('hidden');
-        loadMoreBtn.textContent = `View More Recommendations (${jobMatches.length - visibleJobs} remaining)`;
-    } else {
-        loadMoreBtn.classList.add('hidden');
-    }
-}
+  const removeSkill = (type, value) => {
+    setUserProfile(prev => ({
+      ...prev,
+      [`${type}Skills`]: prev[`${type}Skills`].filter(skill => skill !== value)
+    }));
+  };
 
-function createJobItem(match) {
-  const jobItem = document.createElement('div');
-  jobItem.className = 'job-item';
+  const filterJobsByIndustry = (selectedIndustry) => {
+    setIndustryFilter(selectedIndustry);
+    setVisibleJobs(3);
+  };
 
-  const matchBadgeClass = match.matchPercentage >= 85 ? 'match-badge-high' : 
-                         match.matchPercentage >= 70 ? 'match-badge-medium' : 'match-badge-low';
-  const salaryRange = $${(match.jobRole.salaryMin / 1000).toFixed(0)}K - $${(match.jobRole.salaryMax / 1000).toFixed(0)}K;
+  const loadMoreJobs = () => {
+    setVisibleJobs(prev => prev + 3);
+  };
 
-  jobItem.innerHTML = `
-    <div class="job-header">
-      <div class="job-info">
-        <div class="job-title">
-          <h4>${match.jobRole.title}</h4>
-          <span class="match-badge ${matchBadgeClass}">${match.matchPercentage}% Match</span>
-        </div>
-        <div class="job-meta">
-          <span>${match.jobRole.industry}</span>
-          <span>•</span>
-          <i class="fas fa-map-marker-alt"></i>
-          <span>${match.jobRole.workType}</span>
-        </div>
-        <p className="job-description">${match.jobRole.description}</p>
-        <p className="job-reasoning">${match.reasoning}</p>
-      </div>
-      <div class="job-salary">
-        <div class="salary-amount">${salaryRange}</div>
-        <div class="salary-period">per year</div>
-      </div>
-    </div>
-    <div class="job-footer">
-      <div class="job-skills">
-        ${match.matchingSkills.slice(0, 4).map(skill => 
-          <span class="skill-tag">${skill}</span>
-        ).join('')}
-        ${match.matchingSkills.length > 4 ? 
-          <span class="skill-tag" style="border: 1px solid var(--border-color);">+${match.matchingSkills.length - 4} more</span> 
-          : ''
-        }
-      </div>
-      <button class="view-details-btn" aria-label="View details for ${match.jobRole.title}">
-        View Details
-        <i class="fas fa-arrow-right"></i>
-      </button>
-    </div>
-  `;
-
-  return jobItem;
-}
-
-function getMatchBadgeClass(percentage) {
-    if (percentage >= 85) return 'match-badge-high';
-    if (percentage >= 70) return 'match-badge-medium';
-    return 'match-badge-low';
-}
-
-function formatSalary(min, max) {
-    return `$${(min / 1000).toFixed(0)}K - $${(max / 1000).toFixed(0)}K`;
-}
-
-function displayCareerPathways(careerPaths) {
-    const pathwaysList = document.getElementById('pathwaysList');
-    pathwaysList.innerHTML = '';
-
-    careerPaths.forEach((path, index) => {
-        const pathwayItem = createPathwayItem(path, index);
-        pathwaysList.appendChild(pathwayItem);
-    });
-}
-
-function createPathwayItem(path, index) {
-    const pathwayItem = document.createElement('div');
-    pathwayItem.className = 'pathway-item';
-
-    const iconClass = getPathwayIcon(index);
-    const iconColor = getPathwayIconColor(index);
-
-    pathwayItem.innerHTML = `
-        <h4 class="pathway-title">${path.name}</h4>
-        <p class="pathway-description">${path.description}</p>
-        
-        <div class="pathway-steps">
-            <span>Path:</span>
-            ${path.steps.map((step, stepIndex) => `
-                <div class="step-item">
-                    <span class="step-badge">${step.title}</span>
-                    ${stepIndex < path.steps.length - 1 ? '<i class="fas fa-arrow-right step-arrow"></i>' : ''}
-                </div>
-            `).join('')}
-        </div>
-
-        <div class="pathway-skills">
-            ${path.requiredSkills.slice(0, 4).map(skill => 
-                `<span class="skill-tag">${skill}</span>`
-            ).join('')}
-            ${path.requiredSkills.length > 4 ? 
-                `<span class="skill-tag" style="border: 1px solid var(--border-color);">+${path.requiredSkills.length - 4} more</span>` 
-                : ''
-            }
-        </div>
-
-        <div class="pathway-recommendation" style="color: ${iconColor};">
-            <i class="${iconClass}"></i>
-            <span>${path.recommendationReason}</span>
-        </div>
-        
-        <div class="pathway-timeframe">
-            Timeline: ${path.timeframe}
-        </div>
-    `;
-
-    return pathwayItem;
-}
-
-function getPathwayIcon(index) {
-    const icons = ['fas fa-check-circle', 'fas fa-lightbulb', 'fas fa-star'];
-    return icons[index] || 'fas fa-check-circle';
-}
-
-function getPathwayIconColor(index) {
-    const colors = ['var(--secondary-color)', 'var(--accent-color)', 'var(--primary-color)'];
-    return colors[index] || 'var(--secondary-color)';
-}
-
-function displaySkillGapAnalysis(skillGap) {
-    const strengthsList = document.getElementById('strengthsList');
-    const improvementsList = document.getElementById('improvementsList');
-    const learningPath = document.getElementById('learningPath');
-    const learningPathTags = document.getElementById('learningPathTags');
-
-    // Display strengths
-    strengthsList.innerHTML = '';
-    skillGap.strengthSkills.forEach(skill => {
-        const skillItem = createSkillItem(skill, 'strength');
-        strengthsList.appendChild(skillItem);
-    });
-
-    // Display improvement areas
-    improvementsList.innerHTML = '';
-    skillGap.improvementAreas.forEach(area => {
-        const skillItem = createSkillItem(area, 'improvement');
-        improvementsList.appendChild(skillItem);
-    });
-
-    // Display learning path
-    if (skillGap.learningPath && skillGap.learningPath.length > 0) {
-        learningPath.classList.remove('hidden');
-        learningPathTags.innerHTML = '';
-        
-        skillGap.learningPath.forEach(path => {
-            const tag = document.createElement('span');
-            tag.className = 'learning-tag';
-            tag.textContent = path;
-            learningPathTags.appendChild(tag);
-        });
-    }
-}
-
-function createSkillItem(skill, type) {
-    const skillItem = document.createElement('div');
-    skillItem.className = `skill-item ${type}`;
-
-    skillItem.innerHTML = `
-        <div class="skill-info">
-            <div class="skill-name">${skill.skill}</div>
-            ${skill.recommendation ? `<div class="skill-recommendation">${skill.recommendation}</div>` : ''}
-        </div>
-        <div class="skill-level">
-            <div class="skill-progress">
-                <div class="skill-progress-fill" style="width: ${skill.level}%;"></div>
+  return (
+    <>
+      {/* Header, Hero Section, etc. ... */}
+      <main className="main-content" role="main">
+        <div className="container">
+          <div className="content-grid">
+            <div className="skills-panel">
+              <div className="card sticky-card" id="analysis-form">
+                <h3>Your Profile</h3>
+                <form id="skillsForm" className="skills-form" onSubmit={handleFormSubmit}>
+                  {/* Technical Skills */}
+                  <div className="form-group">
+                    <label htmlFor="technicalSkillInput">Technical Skills</label>
+                    <div className="skill-input-group">
+                      <input
+                        type="text"
+                        id="technicalSkillInput"
+                        placeholder="e.g., JavaScript, Python, React..."
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill('technical'))}
+                      />
+                      <button type="button" onClick={() => addSkill('technical')}>
+                        <i className="fas fa-plus"></i>
+                      </button>
+                    </div>
+                    <div id="technicalSkills" className="skills-display">
+                      {userProfile.technicalSkills.map(skill => (
+                        <div key={skill} className="skill-tag skill-tag-technical">
+                          {skill}
+                          <button type="button" onClick={() => removeSkill('technical', skill)}>
+                            <i className="fas fa-times"></i>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="error-message">{errors.technicalSkills}</div>
+                  </div>
+                  {/* ... other form fields ... */}
+                  <button type="submit" className="btn btn-primary btn-full">
+                    Analyze My Profile
+                  </button>
+                </form>
+              </div>
             </div>
-            <span class="skill-level-text">${getSkillLevelText(skill.level)}</span>
+            <div className="results-panel">
+              {/* ... results rendering ... */}
+              {analysisResults && (
+                <div id="jobRecommendations">
+                  <div className="card-header">
+                    <h3>Recommended Job Roles</h3>
+                    <select
+                      id="industryFilter"
+                      value={industryFilter}
+                      onChange={(e) => filterJobsByIndustry(e.target.value)}
+                    >
+                      <option value="all">All Industries</option>
+                      {[...new Set(analysisResults.jobMatches.map(m => m.jobRole.industry))].map(industry => (
+                        <option key={industry} value={industry}>{industry}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div id="jobList" className="job-list">
+                    {(industryFilter === 'all' 
+                      ? analysisResults.jobMatches 
+                      : analysisResults.jobMatches.filter(match => match.jobRole.industry === industryFilter)
+                    ).slice(0, visibleJobs).map(match => (
+                      <div key={match.jobRole.id} className="job-item">
+                        {/* ... job item JSX ... */}
+                      </div>
+                    ))}
+                  </div>
+                  {(industryFilter === 'all' 
+                    ? analysisResults.jobMatches 
+                    : analysisResults.jobMatches.filter(match => match.jobRole.industry === industryFilter)
+                  ).length > visibleJobs && (
+                    <div className="text-center">
+                      <button
+                        id="loadMoreJobs"
+                        className="btn btn-outline"
+                        onClick={loadMoreJobs}
+                      >
+                        View More Recommendations (
+                        {(industryFilter === 'all' 
+                          ? analysisResults.jobMatches 
+                          : analysisResults.jobMatches.filter(match => match.jobRole.industry === industryFilter)
+                        ).length - visibleJobs} remaining)
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-    `;
+      </main>
+      {/* ... footer, toast ... */}
+    </>
+  );
+};
 
-    return skillItem;
-}
-
-function getSkillLevelText(level) {
-    if (level >= 80) return "Expert";
-    if (level >= 60) return "Advanced";
-    if (level >= 40) return "Intermediate";
-    return "Beginner";
-}
-
-function populateIndustryFilter(jobMatches) {
-    const industryFilter = document.getElementById('industryFilter');
-    const industries = [...new Set(jobMatches.map(match => match.jobRole.industry))];
-    
-    // Clear existing options except "All Industries"
-    industryFilter.innerHTML = '<option value="all">All Industries</option>';
-    
-    industries.forEach(industry => {
-        const option = document.createElement('option');
-        option.value = industry;
-        option.textContent = industry;
-        industryFilter.appendChild(option);
-    });
-}
-
-function filterJobsByIndustry(selectedIndustry) {
-  const jobList = document.getElementById('jobList');
-  if (!jobList || !window.analysisResults) return;
-
-  const filteredJobs = selectedIndustry === "all" 
-    ? window.analysisResults.jobMatches 
-    : window.analysisResults.jobMatches.filter(match => match.jobRole.industry === selectedIndustry);
-
-  jobList.innerHTML = '';
-  filteredJobs.slice(0, window.visibleJobs).forEach(match => {
-    const jobItem = createJobItem(match);
-    jobList.appendChild(jobItem);
-  });
-
-  const loadMoreBtn = document.getElementById('loadMoreJobs');
-  if (filteredJobs.length > window.visibleJobs) {
-    loadMoreBtn.classList.remove('hidden');
-    loadMoreBtn.textContent = View More Recommendations (${filteredJobs.length - window.visibleJobs} remaining);
-  } else {
-    loadMoreBtn.classList.add('hidden');
-  }
-}
-
-function loadMoreJobs() {
-    visibleJobs += 3;
-    
-    const industryFilter = document.getElementById('industryFilter');
-    const selectedIndustry = industryFilter.value;
-    
-    const filteredJobs = selectedIndustry === "all" 
-        ? analysisResults.jobMatches 
-        : analysisResults.jobMatches.filter(match => match.jobRole.industry === selectedIndustry);
-
-    displayJobRecommendations(filteredJobs);
-}
-function showToast(title, message, type = 'success') {
-    const toast = document.getElementById('toast');
-    const toastIcon = toast.querySelector('.toast-icon');
-    const toastTitle = toast.querySelector('.toast-title');
-    const toastMessage = toast.querySelector('.toast-message');
-    toastTitle.textContent = title;
-    toastMessage.textContent = message;
-    toastIcon.className = `toast-icon ${type}`;
-    if (type === 'success') {
-        toastIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
-    } else if (type === 'error') {
-        toastIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
-    toast.classList.remove('hidden');
-    toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-        toast.classList.add('hide');
-        setTimeout(() => {
-            toast.classList.add('hidden');
-            toast.classList.remove('hide');
-        }, 300);
-    }, 5000);
-}
-function scrollToAnalysis() {
-    document.getElementById('analysis-form').scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-    });
-}
-
-window.addSkill = addSkill;
-window.removeSkill = removeSkill;
-window.analyzeProfile = analyzeProfile;
+export default Index;

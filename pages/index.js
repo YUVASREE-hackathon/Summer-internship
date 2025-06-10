@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { analyzeProfile } from '../utils/analyzeProfile';
 import { jobMatchingEngine, jobRolesData, careerPathsData } from '../data';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Index = () => {
   const [userProfile, setUserProfile] = useState({
@@ -246,7 +247,7 @@ const Index = () => {
                     </label>
                     <div className="skill-input-group">
                       <input
-ziej                        type="text"
+                        type="text"
                         id="softSkillInput"
                         placeholder="e.g., Leadership, Communication..."
                         className="form-input"
