@@ -1,4 +1,6 @@
 import React from "react";
+import CountdownTimer from "../components/CountdownTimer";
+import InternshipTracker from "../components/InternshipTracker";
 
 const Index = () => {
   // Handler placeholder for scroll button
@@ -301,6 +303,10 @@ const Index = () => {
           </div>
         </div>
       </main>
+<div className="container">
+  <CountdownTimer />
+  <InternshipTracker />
+</div>
 
       {/* Footer */}
       <footer className="footer">
