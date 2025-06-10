@@ -3,10 +3,9 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-
   "scripts": {
     "dev": "next dev",
-    "build": "cross-env NEXT_DISABLE_ESLINT_PLUGIN=true next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
