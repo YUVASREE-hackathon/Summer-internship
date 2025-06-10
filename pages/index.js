@@ -1,5 +1,5 @@
 import React from "react";
-
+import ProfileForm from "@/components/ProfileForm";
 const Index = () => {
   // Handler placeholder for scroll button
   const scrollToAnalysis = () => {
@@ -301,7 +301,9 @@ const Index = () => {
           </div>
         </div>
       </main>
-
+<div className="container">
+      <ProfileForm />
+    </div>
       {/* Footer */}
       <footer className="footer">
         <div className="container">
