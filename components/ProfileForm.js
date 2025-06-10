@@ -10,6 +10,10 @@ export default function ProfileForm() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisDone, setAnalysisDone] = useState(false);
 
+  const [techInput, setTechInput] = useState("");
+  const [softInput, setSoftInput] = useState("");
+  const [certInput, setCertInput] = useState("");
+
   const handleAddSkill = (type, value) => {
     value = value.trim();
     if (!value) return;
@@ -26,16 +30,21 @@ export default function ProfileForm() {
   };
 
   const handleRemoveSkill = (type, value) => {
-    if (type === "technical") setTechnicalSkills(technicalSkills.filter(s => s !== value));
-    if (type === "soft") setSoftSkills(softSkills.filter(s => s !== value));
-    if (type === "certification") setCertifications(certifications.filter(s => s !== value));
+    if (type === "technical")
+      setTechnicalSkills(technicalSkills.filter((s) => s !== value));
+    if (type === "soft") setSoftSkills(softSkills.filter((s) => s !== value));
+    if (type === "certification")
+      setCertifications(certifications.filter((s) => s !== value));
   };
 
   const validate = () => {
     const newErrors = {};
-    if (technicalSkills.length === 0) newErrors.technical = "Add at least one technical skill.";
-    if (softSkills.length === 0) newErrors.soft = "Add at least one soft skill.";
-    if (!experienceLevel) newErrors.experience = "Select your experience level.";
+    if (technicalSkills.length === 0)
+      newErrors.technical = "Add at least one technical skill.";
+    if (softSkills.length === 0)
+      newErrors.soft = "Add at least one soft skill.";
+    if (!experienceLevel)
+      newErrors.experience = "Select your experience level.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -47,8 +56,7 @@ export default function ProfileForm() {
     setIsAnalyzing(true);
     setAnalysisDone(false);
 
-    // Simulate async analysis
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     setIsAnalyzing(false);
     setAnalysisDone(true);
@@ -57,22 +65,35 @@ export default function ProfileForm() {
   const SkillInput = ({ label, type, skills, setInput, input }) => (
     <div className="form-group">
       <label>{label}</label>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
+      <div className="skill-input-group">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyUp={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleAddSkill(type, input);
+              setInput("");
+            }
+          }}
+          placeholder={`Add ${type} skill...`}
+          className="form-input"
+        />
+        <button
+          type="button"
+          className="btn btn-outline btn-small"
+          onClick={() => {
             handleAddSkill(type, input);
             setInput("");
-          }
-        }}
-        placeholder={`Add ${type} skill...`}
-        className="form-input"
-      />
+          }}
+        >
+          <i className="fas fa-plus"></i>
+        </button>
+      </div>
+
       <div className="skills-display">
-        {skills.map(skill => (
+        {skills.map((skill) => (
           <div key={skill} className={`skill-tag skill-tag-${type}`}>
             {skill}
             <button
@@ -88,10 +109,6 @@ export default function ProfileForm() {
       {errors[type] && <p className="error-message">{errors[type]}</p>}
     </div>
   );
-
-  const [techInput, setTechInput] = useState("");
-  const [softInput, setSoftInput] = useState("");
-  const [certInput, setCertInput] = useState("");
 
   return (
     <form onSubmit={handleSubmit} className="skills-form">
