@@ -66,111 +66,14 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Main Content */}
-      <main className="main-content">
+<main className="main-content">
         <div className="container">
-          <div className="content-grid">
-            {/* Skills Input Panel */}
-            <div className="skills-panel">
-              <div className="card sticky-card" id="analysis-form">
-                <h3>Your Profile</h3>
+          <ProfileForm /> {/* ✅ The only form */}
+        </div>
+      </main>
 
-                <form id="skillsForm" className="skills-form">
-                  {/* Technical Skills */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <i className="fas fa-code icon-technical"></i> Technical Skills
-                    </label>
-                    <div className="skill-input-group">
-                      <input
-                        type="text"
-                        id="technicalSkillInput"
-                        placeholder="e.g., JavaScript, Python, React..."
-                        className="form-input"
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-small"
-                        onClick={() => window.addSkill && window.addSkill("technical")}
-                      >
-                        <i className="fas fa-plus"></i>
-                      </button>
-                    </div>
-                    <div id="technicalSkills" className="skills-display"></div>
-                    <div id="technicalSkillsError" className="error-message"></div>
-                  </div>
-
-                  {/* Soft Skills */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <i className="fas fa-users icon-soft"></i> Soft Skills
-                    </label>
-                    <div className="skill-input-group">
-                      <input
-                        type="text"
-                        id="softSkillInput"
-                        placeholder="e.g., Leadership, Communication..."
-                        className="form-input"
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-small"
-                        onClick={() => window.addSkill && window.addSkill("soft")}
-                      >
-                        <i className="fas fa-plus"></i>
-                      </button>
-                    </div>
-                    <div id="softSkills" className="skills-display"></div>
-                    <div id="softSkillsError" className="error-message"></div>
-                  </div>
-
-                  {/* Certifications */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <i className="fas fa-award icon-certification"></i> Certifications
-                    </label>
-                    <div className="skill-input-group">
-                      <input
-                        type="text"
-                        id="certificationInput"
-                        placeholder="e.g., AWS Certified, PMP..."
-                        className="form-input"
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-small"
-                        onClick={() =>
-                          window.addSkill && window.addSkill("certification")
-                        }
-                      >
-                        <i className="fas fa-plus"></i>
-                      </button>
-                    </div>
-                    <div id="certifications" className="skills-display"></div>
-                  </div>
-
-                  {/* Experience Level */}
-                  <div className="form-group">
-                    <label className="form-label">
-                      <i className="fas fa-chart-line icon-experience"></i> Experience
-                      Level
-                    </label>
-                    <select id="experienceLevel" className="form-select">
-                      <option value="">Select experience level</option>
-                      <option value="entry">Entry Level (0-2 years)</option>
-                      <option value="mid">Mid Level (3-5 years)</option>
-                      <option value="senior">Senior Level (6-10 years)</option>
-                      <option value="executive">Executive Level (10+ years)</option>
-                    </select>
-                    <div id="experienceLevelError" className="error-message"></div>
-                  </div>
-
-                  <button type="submit" className="btn btn-primary btn-full" id="analyzeBtn">
-                    <i className="fas fa-search"></i> Analyze My Profile
-                  </button>
-                </form>
-              </div>
-            </div>
+      {/* Footer */}
+    </>
 
             {/* Analysis Results */}
             <div className="results-panel">
@@ -303,11 +206,7 @@ const Index = () => {
           </div>
         </div>
       </main>
- <div>
-      <h1>CareerMatch Pro</h1>
-      <ProfileForm />
-    </div>
-      {/* Footer */}
+
       <footer className="footer">
         <div className="container">
           <div className="footer-grid">
