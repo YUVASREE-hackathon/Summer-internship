@@ -1,9 +1,8 @@
-jsx
 import React, { useState, useEffect } from "react";
-import Script from 'next/script';
+import { analyzeProfile } from '../utils/analyzeProfile';
+import { jobMatchingEngine, jobRolesData, careerPathsData } from '../data';
 
 const Index = () => {
-  // State management
   const [userProfile, setUserProfile] = useState({
     technicalSkills: [],
     softSkills: [],
@@ -13,6 +12,7 @@ const Index = () => {
   });
   const [analysisResults, setAnalysisResults] = useState(null);
   const [visibleJobs, setVisibleJobs] = useState(3);
+  const [industryFilter, setIndustryFilter] = useState('all');
   const [errors, setErrors] = useState({
     technicalSkills: '',
     softSkills: '',
@@ -20,7 +20,6 @@ const Index = () => {
   });
   const [toast, setToast] = useState({ title: '', message: '', type: 'success', visible: false });
 
-  // Initialize Chart.js
   useEffect(() => {
     if (analysisResults && typeof window !== 'undefined') {
       import('chart.js/auto').then((ChartModule) => {
@@ -40,14 +39,8 @@ const Index = () => {
             },
             options: {
               scales: {
-                y: {
-                  beginAtZero: true,
-                  max: 100,
-                  title: { display: true, text: 'Match Percentage (%)' }
-                },
-                x: {
-                  title: { display: true, text: 'Job Roles' }
-                }
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Match Percentage (%)' } },
+                x: { title: { display: true, text: 'Job Roles' } }
               },
               plugins: {
                 legend: { display: false },
@@ -60,12 +53,19 @@ const Index = () => {
     }
   }, [analysisResults]);
 
-  // Scroll to analysis form
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
+
   const scrollToAnalysis = () => {
     document.getElementById("analysis-form")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Form validation
   const validateForm = () => {
     let isValid = true;
     const newErrors = { technicalSkills: '', softSkills: '', experienceLevel: '' };
@@ -85,16 +85,14 @@ const Index = () => {
     return isValid;
   };
 
-  // Handle form submission
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setAnalysisResults(null); // Show loading state
+    setAnalysisResults(null);
     try {
-      // Simulate API call (replace with real API in production)
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const results = await window.analyzeProfile?.(userProfile);
+      const results = await analyzeProfile(userProfile, jobMatchingEngine, jobRolesData, careerPathsData);
       if (!results) throw new Error('No results returned');
       setAnalysisResults(results);
       setToast({
@@ -114,7 +112,6 @@ const Index = () => {
     }
   };
 
-  // Add skill
   const addSkill = (type) => {
     const input = document.getElementById(`${type}SkillInput`);
     const value = input?.value.trim();
@@ -131,7 +128,6 @@ const Index = () => {
     if (input) input.value = '';
   };
 
-  // Remove skill
   const removeSkill = (type, value) => {
     setUserProfile(prev => ({
       ...prev,
@@ -139,21 +135,17 @@ const Index = () => {
     }));
   };
 
-  // Handle toast auto-dismiss
-  useEffect(() => {
-    if (toast.visible) {
-      const timer = setTimeout(() => {
-        setToast(prev => ({ ...prev, visible: false }));
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast.visible]);
+  const filterJobsByIndustry = (selectedIndustry) => {
+    setIndustryFilter(selectedIndustry);
+    setVisibleJobs(3);
+  };
+
+  const loadMoreJobs = () => {
+    setVisibleJobs(prev => prev + 3);
+  };
 
   return (
     <>
-      <Script src="/data.js" strategy="beforeInteractive" />
-      <Script src="/script.js" strategy="afterInteractive" />
-      {/* Header */}
       <header className="header" role="banner">
         <div className="container">
           <div className="nav-content">
@@ -174,7 +166,6 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="hero" role="region" aria-labelledby="hero-heading">
         <div className="container">
           <div className="hero-content">
@@ -200,16 +191,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Main Content */}
       <main className="main-content" role="main">
         <div className="container">
           <div className="content-grid">
-            {/* Skills Input Panel */}
             <div className="skills-panel">
               <div className="card sticky-card" id="analysis-form" role="form" aria-labelledby="profile-form-heading">
                 <h3 id="profile-form-heading">Your Profile</h3>
                 <form id="skillsForm" className="skills-form" onSubmit={handleFormSubmit}>
-                  {/* Technical Skills */}
                   <div className="form-group">
                     <label className="form-label" htmlFor="technicalSkillInput">
                       <i className="fas fa-code icon-technical"></i> Technical Skills
@@ -252,14 +240,13 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* Soft Skills */}
                   <div className="form-group">
                     <label className="form-label" htmlFor="softSkillInput">
                       <i className="fas fa-users icon-soft"></i> Soft Skills
                     </label>
                     <div className="skill-input-group">
                       <input
-                        type="text"
+ziej                        type="text"
                         id="softSkillInput"
                         placeholder="e.g., Leadership, Communication..."
                         className="form-input"
@@ -295,7 +282,6 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* Certifications */}
                   <div className="form-group">
                     <label className="form-label" htmlFor="certificationInput">
                       <i className="fas fa-award icon-certification"></i> Certifications
@@ -335,7 +321,6 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* Experience Level */}
                   <div className="form-group">
                     <label className="form-label" htmlFor="experienceLevel">
                       <i className="fas fa-chart-line icon-experience"></i> Experience Level
@@ -374,10 +359,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Analysis Results */}
             <div className="results-panel" role="region" aria-labelledby="results-heading">
               <div id="resultsContainer">
-                {/* Initial State */}
                 {!analysisResults && (
                   <div className="card text-center" id="initialState">
                     <div className="empty-state">
@@ -391,7 +374,6 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Loading State */}
                 {analysisResults === null && (
                   <div className="card" id="loadingState">
                     <div className="loading-content">
@@ -402,10 +384,8 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Results */}
                 {analysisResults && (
                   <div id="analysisResults">
-                    {/* Analysis Overview */}
                     <div className="card" id="analysisOverview">
                       <div className="card-header">
                         <h3>Career Analysis Results</h3>
@@ -414,8 +394,6 @@ const Index = () => {
                           <span>Updated just now</span>
                         </div>
                       </div>
-
-                      {/* Profile Strength */}
                       <div className="profile-strength">
                         <div className="strength-header">
                           <span>Profile Strength</span>
@@ -437,8 +415,6 @@ const Index = () => {
                             : "Growing profile. Focus on building core technical skills."}
                         </p>
                       </div>
-
-                      {/* Quick Stats */}
                       <div className="stats-grid">
                         <div className="stat-card stat-primary">
                           <div className="stat-number">
@@ -456,17 +432,14 @@ const Index = () => {
                           <div className="stat-number">
                             ${(analysisResults.analysisResult.averageSalary / 1000).toFixed(0)}K
                           </div>
-                          <div className Onc="stat-label">Avg. Salary</div>
+                          <div className="stat-label">Avg. Salary</div>
                         </div>
                       </div>
-
-                      {/* Job Match Chart */}
                       <div className="chart-container">
                         <canvas id="jobMatchChart" aria-label="Job match percentages chart"></canvas>
                       </div>
                     </div>
 
-                    {/* Job Recommendations */}
                     <div className="card" id="jobRecommendations">
                       <div className="card-header">
                         <h3>Recommended Job Roles</h3>
@@ -474,7 +447,8 @@ const Index = () => {
                           <select
                             id="industryFilter"
                             className="form-select"
-                            onChange={(e) => window.filterJobsByIndustry?.(e.target.value)}
+                            value={industryFilter}
+                            onChange={(e) => filterJobsByIndustry(e.target.value)}
                             aria-label="Filter jobs by industry"
                           >
                             <option value="all">All Industries</option>
@@ -485,7 +459,10 @@ const Index = () => {
                         </div>
                       </div>
                       <div id="jobList" className="job-list">
-                        {analysisResults.jobMatches.slice(0, visibleJobs).map(match => (
+                        {(industryFilter === 'all' 
+                          ? analysisResults.jobMatches 
+                          : analysisResults.jobMatches.filter(match => match.jobRole.industry === industryFilter)
+                        ).slice(0, visibleJobs).map(match => (
                           <div key={match.jobRole.id} className="job-item">
                             <div className="job-header">
                               <div className="job-info">
@@ -529,21 +506,27 @@ const Index = () => {
                           </div>
                         ))}
                       </div>
-                      {analysisResults.jobMatches.length > visibleJobs && (
+                      {(industryFilter === 'all' 
+                        ? analysisResults.jobMatches 
+                        : analysisResults.jobMatches.filter(match => match.jobRole.industry === industryFilter)
+                      ).length > visibleJobs && (
                         <div className="text-center">
                           <button
                             id="loadMoreJobs"
                             className="btn btn-outline"
-                            onClick={() => setVisibleJobs(prev => prev + 3)}
+                            onClick={loadMoreJobs}
                             aria-label="Load more job recommendations"
                           >
-                            View More Recommendations ({analysisResults.jobMatches.length - visibleJobs} remaining)
+                            View More Recommendations (
+                            {(industryFilter === 'all' 
+                              ? analysisResults.jobMatches 
+                              : analysisResults.jobMatches.filter(match => match.jobRole.industry === industryFilter)
+                            ).length - visibleJobs} remaining)
                           </button>
                         </div>
                       )}
                     </div>
 
-                    {/* Career Pathways */}
                     <div className="card" id="careerPathways">
                       <h3>Career Growth Pathways</h3>
                       <div id="pathwaysList" className="pathways-list">
@@ -585,7 +568,6 @@ const Index = () => {
                       </div>
                     </div>
 
-                    {/* Skill Gap Analysis */}
                     <div className="card" id="skillGapAnalysis">
                       <h3>Skill Gap Analysis</h3>
                       <div className="skill-analysis-grid">
@@ -707,7 +689,6 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Toast Notification */}
       <div
         id="toast"
         className={`toast ${toast.visible ? 'show' : 'hidden'}`}
