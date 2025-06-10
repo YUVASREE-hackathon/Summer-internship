@@ -1,5 +1,11 @@
 import React from "react";
+<<<<<<< HEAD
 import ProfileForm from "@/components/ProfileForm";
+=======
+import CountdownTimer from "../components/CountdownTimer";
+import InternshipTracker from "../components/InternshipTracker";
+
+>>>>>>> 0a8b9a91d16f7c4742957d8566d59a194a40f446
 const Index = () => {
   // Handler placeholder for scroll button
   const scrollToAnalysis = () => {
@@ -301,7 +307,8 @@ const Index = () => {
           </div>
         </div>
       </main>
-<div className="container">
+ <div>
+      <h1>CareerMatch Pro</h1>
       <ProfileForm />
     </div>
       {/* Footer */}
