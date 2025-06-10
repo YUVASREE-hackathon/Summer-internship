@@ -595,3 +595,7 @@ function scrollToAnalysis() {
         block: 'start'
     });
 }
+
+window.addSkill = addSkill;
+window.removeSkill = removeSkill;
+window.analyzeProfile = analyzeProfile;
