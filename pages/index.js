@@ -1,14 +1,28 @@
 import React, { useEffect } from "react";
-import Script from 'next/script';
 
 const Index = () => {
-  // Handler placeholder for scroll button
+  // Inject script.js and data.js from public folder
+  useEffect(() => {
+    const script1 = document.createElement("script");
+    script1.src = "/data.js";
+    script1.async = true;
+    document.body.appendChild(script1);
+
+    const script2 = document.createElement("script");
+    script2.src = "/script.js";
+    script2.async = true;
+    document.body.appendChild(script2);
+
+    return () => {
+      document.body.removeChild(script1);
+      document.body.removeChild(script2);
+    };
+  }, []);
+
   const scrollToAnalysis = () => {
     const el = document.getElementById("analysis-form");
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
-
-  // Note: addSkill, form submission, and other JS logic need to be implemented in script1.js or within this component
 
   return (
     <>
@@ -388,6 +402,7 @@ const Index = () => {
         </div>
       </div>
     </>
+
   );
 };
 
