@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import Script from 'next/script';
+
 const Index = () => {
   // Handler placeholder for scroll button
   const scrollToAnalysis = () => {
@@ -10,9 +12,8 @@ const Index = () => {
 
   return (
     <>
-      {/* Meta tags and head elements should be handled in public/index.html or with React Helmet in React apps */}
-      {/* This component returns only the body content */}
-
+<Script src="/data.js" strategy="beforeInteractive" />
+<Script src="/script.js" strategy="afterInteractive" />
       {/* Header */}
       <header className="header">
         <div className="container">
