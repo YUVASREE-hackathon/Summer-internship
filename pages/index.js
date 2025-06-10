@@ -70,10 +70,7 @@ const Index = () => {
         <div className="container">
           <ProfileForm /> {/* ✅ The only form */}
         </div>
-      </main>
-
-      {/* Footer */}
-    </>
+      </main>    
 
             {/* Analysis Results */}
             <div className="results-panel">
