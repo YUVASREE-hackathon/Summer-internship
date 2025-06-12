@@ -20,6 +20,7 @@ const Index = () => {
   const [chatHistory, setChatHistory] = useState([
   { sender: 'ai', text: 'Hi! I\'m your career assistant. Ask me anything.' }
 ]);
+
   const [errors, setErrors] = useState({
     technicalSkills: '',
     softSkills: '',
@@ -752,6 +753,7 @@ const sendChatMessage = async () => {
           </div>
         </div>
       </div>
+
       {/* Floating AI Chat Assistant */}
 <div className="chatbot-button" onClick={() => setChatVisible(!chatVisible)}>
   <i className="fas fa-robot"></i>
