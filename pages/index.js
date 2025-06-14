@@ -11,6 +11,22 @@ const Index = () => {
     experienceLevel: '',
     industry: ''
   });
+const [prompt, setPrompt] = useState('');
+const [response, setResponse] = useState('');
+const [loading, setLoading] = useState(false);
+
+const handleSubmit = async () => {
+  setLoading(true);
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  const data = await res.json();
+  setResponse(data.result);
+  setLoading(false);
+};
+
   const [analysisResults, setAnalysisResults] = useState(null);
   const [visibleJobs, setVisibleJobs] = useState(3);
   const [industryFilter, setIndustryFilter] = useState('all');
@@ -685,6 +701,29 @@ const sendChatMessage = async () => {
           </div>
         </div>
       </main>
+<section style={{ padding: '2rem', marginTop: '2rem', backgroundColor: '#f9f9f9' }}>
+  <h2 style={{ marginBottom: '1rem' }}>Ask the AI Anything</h2>
+  <textarea
+    rows="4"
+    cols="50"
+    value={prompt}
+    placeholder="Type your question..."
+    onChange={(e) => setPrompt(e.target.value)}
+    style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
+  />
+  <br />
+  <button
+    onClick={handleSubmit}
+    disabled={loading}
+    style={{ marginTop: '1rem', padding: '0.5rem 1rem', fontSize: '1rem' }}
+  >
+    {loading ? 'Thinking...' : 'Ask AI'}
+  </button>
+  <div style={{ marginTop: '1rem', whiteSpace: 'pre-wrap', backgroundColor: '#fff', padding: '1rem' }}>
+    <strong>Response:</strong>
+    <p>{response}</p>
+  </div>
+</section>
 
       <footer className="footer" role="contentinfo">
         <div className="container">
