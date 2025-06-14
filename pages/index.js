@@ -13,6 +13,7 @@ const Index = () => {
     experienceLevel: '',
     industry: ''
   });
+  
 const [prompt, setPrompt] = useState('');
 const [response, setResponse] = useState('');
 const [loading, setLoading] = useState(false);
