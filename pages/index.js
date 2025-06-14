@@ -3,6 +3,7 @@ import { analyzeProfile } from '../utils/analyzeProfile';
 import { jobMatchingEngine, jobRolesData, careerPathsData } from '../data';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Link from 'next/link';
+import { Analytics } from "@vercel/analytics/next"
 
 const Index = () => {
   const [userProfile, setUserProfile] = useState({
