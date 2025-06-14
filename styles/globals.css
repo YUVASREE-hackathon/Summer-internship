@@ -256,6 +256,56 @@ a {
   border-radius: 5px;
 }
 
+.sign-in-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.sign-in-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.sign-in-content input {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+}
+
+.sign-in-buttons button {
+  margin-right: 0.5rem;
+}
+
+.signin-container {
+  max-width: 400px;
+  margin: 5rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.signin-container input {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+}
+.signin-container button {
+  margin: 0.5rem 0.25rem;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;

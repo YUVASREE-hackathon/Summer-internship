@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { analyzeProfile } from '../utils/analyzeProfile';
 import { jobMatchingEngine, jobRolesData, careerPathsData } from '../data';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import Link from 'next/link';
 
 const Index = () => {
   const [userProfile, setUserProfile] = useState({
@@ -14,6 +15,9 @@ const Index = () => {
 const [prompt, setPrompt] = useState('');
 const [response, setResponse] = useState('');
 const [loading, setLoading] = useState(false);
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [showSignIn, setShowSignIn] = useState(false);
 
 const handleSubmit = async () => {
   setLoading(true);
@@ -108,6 +112,33 @@ const handleSubmit = async () => {
     setErrors(newErrors);
     return isValid;
   };
+
+const handleSignUp = async () => {
+  const { createUserWithEmailAndPassword, auth, db, doc, setDoc } = await import('../utils/firebase');
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    await setDoc(doc(db, "users", user.uid), {
+      email: user.email,
+      uid: user.uid
+    });
+    alert("Sign up successful!");
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+};
+
+const handleSignIn = async () => {
+  const { signInWithEmailAndPassword, auth } = await import('../utils/firebase');
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    alert(`Welcome back, ${userCredential.user.email}`);
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+};
 
 const sendChatMessage = async () => {
   const trimmed = chatInput.trim();
@@ -216,7 +247,10 @@ const sendChatMessage = async () => {
               <a href="#" className="nav-link">Dashboard</a>
               <a href="#" className="nav-link">Jobs</a>
               <a href="#" className="nav-link">Profile</a>
-              <button className="btn btn-primary" aria-label="Sign in">Sign In</button>
+              <Link href="/signin">
+  <button className="btn btn-primary" aria-label="Sign in">Sign In</button>
+</Link>
+
             </nav>
             <button className="mobile-menu-btn" aria-label="Toggle mobile menu">
               <i className="fas fa-bars"></i>
@@ -770,6 +804,31 @@ const sendChatMessage = async () => {
           </div>
         </div>
       </div>
+
+{showSignIn && (
+  <div className="sign-in-modal">
+    <div className="sign-in-content">
+      <h3>Sign In / Sign Up</h3>
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <div className="sign-in-buttons">
+        <button onClick={handleSignIn}>Sign In</button>
+        <button onClick={handleSignUp}>Sign Up</button>
+      </div>
+      <button onClick={() => setShowSignIn(false)}>Close</button>
+    </div>
+  </div>
+)}
 
       {/* Floating AI Chat Assistant */}
 <div className="chatbot-button" onClick={() => setChatVisible(!chatVisible)}>
